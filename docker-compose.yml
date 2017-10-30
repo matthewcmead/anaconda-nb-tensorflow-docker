@@ -1,0 +1,12 @@
+version: "2"
+services:
+  anaconda-nb:
+    build:
+      context: ./anaconda3
+      dockerfile: Dockerfile
+    image: matthewcmead/anaconda-nb-tensorflow-docker-centos7
+    ports:
+      - "127.0.0.1:8888:8888"
+    volumes:
+      - ~/development/notebooks:/notebook
+    command: jupyter-notebook --allow-root --notebook-dir=/notebook --ip="*"
