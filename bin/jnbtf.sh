@@ -21,10 +21,10 @@ JNBDIR="$(cd "$DIR" && cd .. && pwd)"
 
 if [ "$1" == "up" ]; then
   cd $JNBDIR
-  docker-compose up --build -d
+  docker-compose up -d
   URL=""
   while [ "X$URL" == "X" ]; do
-    URL="$(docker-compose logs anaconda-nb | grep "http://localhost.*token" | sed "s/.*http/http/")"
+    URL="$(docker-compose logs anaconda-nb | grep "http://[^:][^:]*:8888.*token" | sed "s/^.*http:\/\/\([^:][^:]*\):8888/http:\/\/localhost:8888/")"
     sleep 1
   done
   open "$URL"

@@ -1,21 +1,17 @@
-FROM matthewcmead/anaconda-nb-docker-centos7 as builder
-
-
-env TENSORFLOW_VERSION=1.4.0rc1 \
-    TENSORBOARD_VERSION=0.4.0rc1
-
-COPY pips /tmp/pips
-
-RUN touch /tmp/timestamp.pip \
-&&  pip install --no-cache-dir --no-index --find-links /tmp/pips \
-    tensorflow==${TENSORFLOW_VERSION} \
-    tensorflow-tensorboard==${TENSORBOARD_VERSION} \
-&&  cd /opt/conda && find . -type f -newer /tmp/timestamp.pip >/tmp/conda_changed.txt \
-&&  mkdir /tmp/conda_changed \
-&&  tar -C /opt/conda -T /tmp/conda_changed.txt -cf - | tar -C /tmp/conda_changed -xf -
-
-FROM matthewcmead/anaconda-nb-docker-centos7 as runner
+FROM matthewcmead/anaconda-nb-docker-centos7
 
 MAINTAINER matt@matthewcmead.com
 
-COPY --from=builder /tmp/conda_changed /opt/conda
+COPY conf/repohost /tmp/repohost
+
+RUN \
+    export THEHOST=$(cat /tmp/repohost) \
+&&  if grep none /tmp/repohost; then export THEHOST=$(ip route show | grep default | sed "s/^default via //; s/ .*$//"); fi \
+&&  /opt/conda/bin/pip install --upgrade --trusted-host ${THEHOST} --no-cache-dir --no-index --find-links http://${THEHOST}:8879/pips/ \
+      tensorflow \
+      tensorflow-tensorboard \
+      expectexception \
+      nbzip \
+&&  /opt/conda/bin/jupyter serverextension enable --py nbzip --sys-prefix \
+&&  /opt/conda/bin/jupyter nbextension install --py nbzip \
+&&  /opt/conda/bin/jupyter nbextension enable --py nbzip
